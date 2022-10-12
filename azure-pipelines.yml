@@ -1,0 +1,67 @@
+trigger:
+- main
+
+variables:
+  ACRServiceConnection: 'niceTestACRServiceConnection'
+  AKSServiceConnection: 'niceTestAKCServiceConnection'
+  dockerRegistryURL: 'nicetestacr.azurecr.io'
+  imageRepo: deploy-aks
+  tag: '$(Build.BuildId)'
+
+stages:
+  - stage: build_image
+    displayName: build an image
+    jobs:
+
+      - job: build_container_image_job
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+
+        - task: Docker@2
+          inputs:
+            containerRegistry: $(ACRServiceConnection)
+            repository: '$(imageRepo)'
+            command: buildAndPush
+            Dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+            buildContext: '$(Build.SourcesDirectory)'
+            tags: |
+              $(tag)
+
+      - job: publish_k8s_manifest_files_job
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Pipeline.Workspace)/s/k8s'
+              artifact: 'manifests'
+              publishLocation: 'pipeline'
+
+  - stage: deploy_container
+    dependsOn: build_image
+    displayName: deploy a container
+    jobs:
+
+      - job: deployment_job
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          aksSecretName: testAKSSecretName
+        steps:
+
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            buildType: 'current'
+            artifactName: 'manifests'
+            targetPath: '$(Pipeline.Workspace)/manifests'
+
+        - task: KubernetesManifest@0
+          inputs:
+            action: 'deploy'
+            kubernetesServiceConnection: $(AKSServiceConnection)
+            namespace: 'default'
+            containers: |
+              $(dockerRegistryURL)/$(imageRepo):$(tag)
+            manifests: |
+              $(Pipeline.Workspace)/manifests/deployaks-app-depl.yml

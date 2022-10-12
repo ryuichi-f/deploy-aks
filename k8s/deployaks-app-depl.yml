@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: deployaks-app
-          image: __DOCKER_IMAGE__
+          image: nicetestacr.azurecr.io/deploy-aks
 
 ---
 apiVersion: v1

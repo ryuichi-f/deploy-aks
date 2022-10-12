@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployaks-app-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployaks-app
+  template:
+    metadata:
+      labels:
+        app: deployaks-app
+    spec:
+      containers:
+        - name: deployaks-app
+          image: __DOCKER_IMAGE__
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deployaks-app-loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: deployaks-app
+  ports:
+    - name: deployaks-port
+      protocol: TCP
+      port: 80
+      targetPort: 8080

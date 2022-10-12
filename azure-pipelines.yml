@@ -1,7 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
 
 trigger:
 - main
@@ -17,10 +13,12 @@ stages:
   - stage: build_image
     displayName: build an image
     jobs:
+
       - job: build_container_image_job
         pool:
           vmImage: ubuntu-latest
         steps:
+
         - task: Docker@2
           inputs:
             containerRegistry: $(ACRServiceConnection)
@@ -45,25 +43,20 @@ stages:
     dependsOn: build_image
     displayName: deploy a container
     jobs:
+
       - job: deployment_job
         pool:
           vmImage: ubuntu-latest
         variables:
           aksSecretName: testAKSSecretName
         steps:
+
         - task: DownloadPipelineArtifact@2
           inputs:
             buildType: 'current'
             artifactName: 'manifests'
             targetPath: '$(Pipeline.Workspace)/manifests'
-        # - task: KubernetesManifest@0
-        #   inputs:
-        #       action: 'createSecret'
-        #       kubernetesServiceConnection: $(AKSServiceConnection)
-        #       namespace: 'default'
-        #       secretType: 'dockerRegistry'
-        #       secretName: '$(aksSecretName)'
-        #       dockerRegistryEndpoint: $(ACRServiceConnection)
+
         - task: KubernetesManifest@0
           inputs:
             action: 'deploy'

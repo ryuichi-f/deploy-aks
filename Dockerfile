@@ -13,6 +13,6 @@ RUN mkdir /app
 
 EXPOSE 8080
 
-COPY --from=build "/build/build/libs/*.jar" /app/app.jar
+COPY --from=build "/build/build/libs/deploy-aks-0.0.1-SNAPSHOT.jar" /app/app.jar
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
